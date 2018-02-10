@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2015  The DOSBox Team
+ *  Copyright (C) 2002-2017  The DOSBox Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -9,7 +9,7 @@
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Library General Public License for more details.
+ *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
@@ -169,6 +169,8 @@ void MixerChannel::Mix(Bitu _needed) {
 	needed=_needed;
 	while (enabled && needed>done) {
 		Bitu left = (needed - done);
+		left *= freq_add;
+		left  = (left >> FREQ_SHIFT) + ((left & FREQ_MASK)!=0);
 		handler(left);
 	}
 }
@@ -299,21 +301,22 @@ inline void MixerChannel::AddSamples(Bitu len, const Type* data) {
 }
 
 void MixerChannel::AddStretched(Bitu len,Bit16s * data) {
-	if (done>=needed) {
+	if (done >= needed) {
 		LOG_MSG("Can't add, buffer full");
 		return;
 	}
 	//Target samples this inputs gets stretched into
-	Bitu outlen=needed-done;
+	Bitu outlen = needed - done;
 	Bitu index = 0;
 	Bitu index_add = (len << FREQ_SHIFT)/outlen;
-	Bitu mixpos=mixer.pos+done;
-	done=needed;
-	Bitu pos=0;
+	Bitu mixpos = mixer.pos + done;
+	done = needed;
+	Bitu pos = 0;
 
 	while (outlen--) {
 		Bitu new_pos = index >> FREQ_SHIFT;
 		if (pos != new_pos) {
+			pos = new_pos;
 			//Forward the previous sample
 			prevSample[0] = data[0];
 			data++;
@@ -322,9 +325,9 @@ void MixerChannel::AddStretched(Bitu len,Bit16s * data) {
 		Bits diff_mul = index & FREQ_MASK;
 		index += index_add;
 		mixpos &= MIXER_BUFMASK;
-		Bits sample = prevSample[0]+((diff*diff_mul) >> FREQ_SHIFT);
-		mixer.work[mixpos][0]+=sample*volmul[0];
-		mixer.work[mixpos][1]+=sample*volmul[1];
+		Bits sample = prevSample[0] + ((diff * diff_mul) >> FREQ_SHIFT);
+		mixer.work[mixpos][0] += sample * volmul[0];
+		mixer.work[mixpos][1] += sample * volmul[1];
 		mixpos++;
 	}
 }
@@ -448,7 +451,7 @@ static void MIXER_Mix_NoSound(void) {
 	}
 	/* Set values for next tick */
 	mixer.tick_counter += mixer.tick_add;
-	mixer.needed += (mixer.tick_counter >> TICK_SHIFT);
+	mixer.needed = (mixer.tick_counter >> TICK_SHIFT);
 	mixer.tick_counter &= TICK_MASK;
 	mixer.done=0;
 }
@@ -499,7 +502,7 @@ static void SDLCALL MIXER_CallBack(void * userdata, Uint8 *stream, int len) {
 			if(diff > (mixer.min_needed<<1)) diff = mixer.min_needed<<1;
 			if(diff > (mixer.min_needed>>1))
 				mixer.tick_add = ((mixer.freq-(diff/5)) << TICK_SHIFT)/1000;
-			else if (diff > (mixer.min_needed>>4))
+			else if (diff > (mixer.min_needed>>2))
 				mixer.tick_add = ((mixer.freq-(diff>>3)) << TICK_SHIFT)/1000;
 			else
 				mixer.tick_add = (mixer.freq<< TICK_SHIFT)/1000;

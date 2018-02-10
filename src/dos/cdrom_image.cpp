@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2015  The DOSBox Team
+ *  Copyright (C) 2002-2017  The DOSBox Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -232,17 +232,13 @@ bool CDROM_Interface_Image::PlayAudioSector(unsigned long start,unsigned long le
 	player.currFrame = start;
 	player.targetFrame = start + len;
 	int track = GetTrack(start) - 1;
-	/*
-	if(track >= 0 && tracks[track].attr == 0x40)
-	{
+	if(track >= 0 && tracks[track].attr == 0x40) {
 		LOG(LOG_MISC,LOG_WARN)("Game tries to play the data track. Not doing this");
 		player.isPlaying = false;
 		//Unclear wether return false should be here. 
 		//specs say that this function returns at once and games should check the status wether the audio is actually playing
 		//Real drives either fail or succeed as well
-	}
-	*/
-	player.isPlaying = true;
+	} else player.isPlaying = true;
 	player.isPaused = false;
 	SDL_mutexV(player.mutex);
 	return true;

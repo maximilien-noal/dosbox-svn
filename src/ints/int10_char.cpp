@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2015  The DOSBox Team
+ *  Copyright (C) 2002-2017  The DOSBox Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ static void TANDY16_CopyRow(Bit8u cleft,Bit8u cright,Bit8u rold,Bit8u rnew,PhysP
 	PhysPt dest=base+((CurMode->twidth*rnew)*(cheight/banks)+cleft)*4;
 	PhysPt src=base+((CurMode->twidth*rold)*(cheight/banks)+cleft)*4;
 	Bitu copy=(cright-cleft)*4;Bitu nextline=CurMode->twidth*4;
-	for (Bitu i=0;i<cheight/banks;i++) {
+	for (Bitu i=0;i<static_cast<Bitu>(cheight/banks);i++) {
 		for (Bitu b=0;b<banks;b++) MEM_BlockCopy(dest+b*8*1024,src+b*8*1024,copy);
 		dest+=nextline;src+=nextline;
 	}
@@ -140,7 +140,7 @@ static void TANDY16_FillRow(Bit8u cleft,Bit8u cright,Bit8u row,PhysPt base,Bit8u
 	PhysPt dest=base+((CurMode->twidth*row)*(cheight/banks)+cleft)*4;
 	Bitu copy=(cright-cleft)*4;Bitu nextline=CurMode->twidth*4;
 	attr=(attr & 0xf) | (attr & 0xf) << 4;
-	for (Bitu i=0;i<cheight/banks;i++) {
+	for (Bitu i=0;i<static_cast<Bitu>(cheight/banks);i++) {
 		for (Bitu x=0;x<copy;x++) {
 			for (Bitu b=0;b<banks;b++) mem_writeb(dest+b*8*1024+x,attr);
 		}
@@ -405,7 +405,7 @@ void INT10_SetCursorPos(Bit8u row,Bit8u col,Bit8u page) {
 void ReadCharAttr(Bit16u col,Bit16u row,Bit8u page,Bit16u * result) {
 	/* Externally used by the mouse routine */
 	PhysPt fontdata;
-	Bitu x,y,pos = row*real_readw(BIOSMEM_SEG,BIOSMEM_NB_COLS)+col;
+	Bit16u cols = real_readw(BIOSMEM_SEG,BIOSMEM_NB_COLS);
 	Bit8u cheight = real_readb(BIOSMEM_SEG,BIOSMEM_CHAR_HEIGHT);
 	bool split_chr = false;
 	switch (CurMode->type) {
@@ -413,7 +413,7 @@ void ReadCharAttr(Bit16u col,Bit16u row,Bit8u page,Bit16u * result) {
 		{	
 			// Compute the address  
 			Bit16u address=page*real_readw(BIOSMEM_SEG,BIOSMEM_PAGE_SIZE);
-			address+=pos*2;
+			address+=(row*cols+col)*2;
 			// read the char 
 			PhysPt where = CurMode->pstart+address;
 			*result=mem_readw(where);
@@ -441,8 +441,7 @@ void ReadCharAttr(Bit16u col,Bit16u row,Bit8u page,Bit16u * result) {
 		break;
 	}
 
-	x=(pos%CurMode->twidth)*8;
-	y=(pos/CurMode->twidth)*cheight;
+	Bitu x=col*8,y=row*cheight*(cols/CurMode->twidth);
 
 	for (Bit16u chr=0;chr<256;chr++) {
 
@@ -489,14 +488,14 @@ void INT10_ReadCharAttr(Bit16u * result,Bit8u page) {
 void WriteChar(Bit16u col,Bit16u row,Bit8u page,Bit8u chr,Bit8u attr,bool useattr) {
 	/* Externally used by the mouse routine */
 	PhysPt fontdata;
-	Bitu x,y,pos = row*real_readw(BIOSMEM_SEG,BIOSMEM_NB_COLS)+col;
+	Bit16u cols = real_readw(BIOSMEM_SEG,BIOSMEM_NB_COLS);
 	Bit8u back,cheight = real_readb(BIOSMEM_SEG,BIOSMEM_CHAR_HEIGHT);
 	switch (CurMode->type) {
 	case M_TEXT:
 		{	
 			// Compute the address  
 			Bit16u address=page*real_readw(BIOSMEM_SEG,BIOSMEM_PAGE_SIZE);
-			address+=pos*2;
+			address+=(row*cols+col)*2;
 			// Write the char 
 			PhysPt where = CurMode->pstart+address;
 			mem_writeb(where,chr);
@@ -573,8 +572,7 @@ void WriteChar(Bit16u col,Bit16u row,Bit8u page,Bit8u chr,Bit8u attr,bool useatt
 		break;
 	}
 
-	x=(pos%CurMode->twidth)*8;
-	y=(pos/CurMode->twidth)*cheight;
+	Bitu x=col*8,y=row*cheight*(cols/CurMode->twidth);
 
 	Bit16u ty=(Bit16u)y;
 	for (Bit8u h=0;h<cheight;h++) {
