@@ -39,5 +39,5 @@ Name: "{commondesktop}\DOSBox SVN"; Filename: "{app}\DOSBox.exe";
 Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\DOSBox SVN"; Filename: "{app}\DOSBox.exe";
 
 [Run]
-Filename: "{app}\VC_redist.x86.exe"; Parameters: "/quiet"; StatusMsg: "Installation MSVC Runtime 2017 x86..."; WorkingDir: "{app}"
+Filename: "{app}\VC_redist.x86.exe"; Parameters: "/quiet /norestart"; StatusMsg: "Installation MSVC Runtime 2017 x86..."; WorkingDir: "{app}"
 Filename: "{app}\DOSBox.exe"; Flags: shellexec postinstall skipifsilent; Description: "{cm:LaunchProgram,DOSBox SVN}"
