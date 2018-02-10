@@ -25,7 +25,7 @@ Name: desktopicon; Description: {cm:CreateDesktopIcon}; GroupDescription: {cm:Ad
 Name: quicklaunchicon; Description: {cm:CreateQuickLaunchIcon}; GroupDescription: {cm:AdditionalIcons}; Flags: unchecked; OnlyBelowVersion: 0,6.1
 
 [Files]
-Source: "Release\DOSBOx.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "Release\DOSBox.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\deps\libpng\projects\vstudio\Release\libpng16.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\deps\SDL\src\VisualC\SDL\Release\SDL.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\deps\SDL_net\lib\x86\SDL_net.dll"; DestDir: "{app}"; Flags: ignoreversion
