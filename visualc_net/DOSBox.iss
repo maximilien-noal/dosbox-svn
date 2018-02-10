@@ -27,9 +27,9 @@ Name: quicklaunchicon; Description: {cm:CreateQuickLaunchIcon}; GroupDescription
 [Files]
 Source: "Release\DOSBox.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\deps\libpng\projects\vstudio\Release\libpng16.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\deps\SDL\src\VisualC\SDL\Release\SDL.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\deps\SDL_net\lib\x86\SDL_net.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "VC_redist.x86.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "SDL.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "SDL_net.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "VC_redist.x86.exe"; DestDir: "{tmp}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
@@ -39,5 +39,5 @@ Name: "{commondesktop}\DOSBox SVN"; Filename: "{app}\DOSBox.exe";
 Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\DOSBox SVN"; Filename: "{app}\DOSBox.exe";
 
 [Run]
-Filename: "{app}\VC_redist.x86.exe"; Parameters: "/quiet /norestart"; StatusMsg: "Installation MSVC Runtime 2017 x86..."; WorkingDir: "{app}"
+Filename: "{tmp}\VC_redist.x86.exe"; Parameters: "/quiet /norestart"; StatusMsg: "Installation MSVC Runtime 2017 x86..."; WorkingDir: "{tmp}"
 Filename: "{app}\DOSBox.exe"; Flags: shellexec postinstall skipifsilent; Description: "{cm:LaunchProgram,DOSBox SVN}"
