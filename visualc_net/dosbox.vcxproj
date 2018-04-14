@@ -53,8 +53,8 @@
     <OutDir>.\Release\</OutDir>
     <IntDir>.\Release\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\libpng;F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\zlib;F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\SDL_net\include;F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\SDL\include;$(IncludePath);$(VC_IncludePath);$(WindowsSdk_71A_IncludePath);</IncludePath>
-    <LibraryPath>F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\zlib\lib;F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\SDL_net\lib\x86;F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\SDL\lib\x86;F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\libpng;$(LibraryPath);$(VC_LibraryPath_x86);$(WindowsSdk_71A_LibraryPath_x86);</LibraryPath>
+    <IncludePath>F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\libpng;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\zlib;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\SDL_net\include;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\SDL\include;$(IncludePath);$(VC_IncludePath);$(WindowsSdk_71A_IncludePath)</IncludePath>
+    <LibraryPath>F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\zlib\lib;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\SDL_net\lib\x86;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\SDL\lib\x86;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\libpng;$(LibraryPath);$(VC_LibraryPath_x86);$(WindowsSdk_71A_LibraryPath_x86)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
