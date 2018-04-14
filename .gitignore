@@ -240,3 +240,6 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+/visualc_net/setup-DOSBox_SVN_r4093.exe
+/visualc_net/SDL_net.dll
+/visualc_net/SDL.dll
