@@ -46,15 +46,15 @@
     <OutDir>.\Debug\</OutDir>
     <IntDir>.\Debug\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\libpng;F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\zlib;F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\SDL_net\include;F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\SDL\include;$(IncludePath)</IncludePath>
-    <LibraryPath>F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\zlib\lib;F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\SDL_net\lib\x86;F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\SDL\lib\x86;F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\libpng;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\max\source\repos\dosbox-svn\deps\SDL_net\include;C:\Users\max\source\repos\dosbox-svn\deps\libpng;C:\Users\max\source\repos\dosbox-svn\deps\zlib;C:\Users\max\source\repos\dosbox-svn\deps\SDL\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\max\source\repos\dosbox-svn\deps\zlib\lib;C:\Users\max\source\repos\dosbox-svn\deps\SDL_net\lib\x86;C:\Users\max\source\repos\dosbox-svn\deps\SDL\lib\x86;C:\Users\max\source\repos\dosbox-svn\deps\libpng;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>.\Release\</OutDir>
     <IntDir>.\Release\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\libpng;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\zlib;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\SDL_net\include;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\SDL\include;$(IncludePath);$(VC_IncludePath);$(WindowsSdk_71A_IncludePath)</IncludePath>
-    <LibraryPath>F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\zlib\lib;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\SDL_net\lib\x86;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\SDL\lib\x86;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\libpng;$(LibraryPath);$(VC_LibraryPath_x86);$(WindowsSdk_71A_LibraryPath_x86)</LibraryPath>
+    <IncludePath>C:\Users\max\source\repos\dosbox-svn\deps\SDL_net\include;C:\Users\max\source\repos\dosbox-svn\deps\libpng;C:\Users\max\source\repos\dosbox-svn\deps\zlib;C:\Users\max\source\repos\dosbox-svn\deps\SDL\include;$(IncludePath);$(VC_IncludePath);$(WindowsSdk_71A_IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\max\source\repos\dosbox-svn\deps\zlib\lib;C:\Users\max\source\repos\dosbox-svn\deps\SDL_net\lib\x86;C:\Users\max\source\repos\dosbox-svn\deps\SDL\lib\x86;C:\Users\max\source\repos\dosbox-svn\deps\libpng;$(LibraryPath);$(VC_LibraryPath_x86);$(WindowsSdk_71A_LibraryPath_x86)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -372,6 +372,17 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\src\dosbox.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\deps\SDL\lib\x86\SDL.lib" />
+    <Library Include="..\deps\SDL\lib\x86\SDLmain.lib" />
+    <Library Include="..\deps\SDL_net\lib\x86\SDL_net.lib" />
+    <Library Include="..\deps\zlib\lib\zlib.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="libpng16.dll" />
+    <None Include="SDL.dll" />
+    <None Include="SDL_net.dll" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

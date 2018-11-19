@@ -748,4 +748,15 @@
   <ItemGroup>
     <Image Include="..\src\dosbox.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\deps\SDL_net\lib\x86\SDL_net.lib" />
+    <Library Include="..\deps\SDL\lib\x86\SDL.lib" />
+    <Library Include="..\deps\SDL\lib\x86\SDLmain.lib" />
+    <Library Include="..\deps\zlib\lib\zlib.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="SDL.dll" />
+    <None Include="SDL_net.dll" />
+    <None Include="libpng16.dll" />
+  </ItemGroup>
 </Project>

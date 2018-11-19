@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2017  The DOSBox Team
+ *  Copyright (C) 2002-2018  The DOSBox Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -414,13 +414,16 @@ check_gotbpp:
 		goto check_gotbpp;
 #endif
 	case SCREEN_OVERLAY:
+		//We only accept 32bit output from the scalers here
+		//Can't handle true color inputs
 		if (flags & GFX_RGBONLY || !(flags&GFX_CAN_32)) goto check_surface;
 		flags|=GFX_SCALING;
 		flags&=~(GFX_CAN_8|GFX_CAN_15|GFX_CAN_16);
 		break;
 #if C_OPENGL
 	case SCREEN_OPENGL:
-		if (flags & GFX_RGBONLY || !(flags&GFX_CAN_32)) goto check_surface;
+		//We only accept 32bit output from the scalers here
+		if (!(flags&GFX_CAN_32)) goto check_surface;
 		flags|=GFX_SCALING;
 		flags&=~(GFX_CAN_8|GFX_CAN_15|GFX_CAN_16);
 		break;
@@ -676,14 +679,14 @@ dosurface:
 			free(sdl.opengl.framebuf);
 		}
 		sdl.opengl.framebuf=0;
-		if (!(flags&GFX_CAN_32) || (flags & GFX_RGBONLY)) goto dosurface;
+		if (!(flags&GFX_CAN_32)) goto dosurface;
 		int texsize=2 << int_log2(width > height ? width : height);
 		if (texsize>sdl.opengl.max_texsize) {
 			LOG_MSG("SDL:OPENGL: No support for texturesize of %d, falling back to surface",texsize);
 			goto dosurface;
 		}
 		SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
-#if defined (WIN32) && SDL_VERSION_ATLEAST(1, 2, 11)
+#if SDL_VERSION_ATLEAST(1, 2, 11)
 		SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 0 );
 #endif
 		GFX_SetupSurfaceScaled(SDL_OPENGL,0);
@@ -701,7 +704,14 @@ dosurface:
 			sdl.opengl.framebuf=malloc(width*height*4);		//32 bit color
 		}
 		sdl.opengl.pitch=width*4;
-		glViewport(sdl.clip.x,sdl.clip.y,sdl.clip.w,sdl.clip.h);
+
+		if(sdl.clip.x ==0 && sdl.clip.y ==0 && sdl.desktop.fullscreen && !sdl.desktop.full.fixed && (sdl.clip.w != sdl.surface->w || sdl.clip.h != sdl.surface->h)) { 
+//			LOG_MSG("attempting to fix the centering to %d %d %d %d",(sdl.surface->w-sdl.clip.w)/2,(sdl.surface->h-sdl.clip.h)/2,sdl.clip.w,sdl.clip.h);
+			glViewport((sdl.surface->w-sdl.clip.w)/2,(sdl.surface->h-sdl.clip.h)/2,sdl.clip.w,sdl.clip.h);
+		} else {
+			glViewport(sdl.clip.x,sdl.clip.y,sdl.clip.w,sdl.clip.h);
+		}		
+
 		glMatrixMode (GL_PROJECTION);
 		glDeleteTextures(1,&sdl.opengl.texture);
  		glGenTextures(1,&sdl.opengl.texture);
@@ -1237,14 +1247,28 @@ static void GUI_StartUp(Section * sec) {
 	}
 	sdl.desktop.doublebuf=section->Get_bool("fulldouble");
 #if SDL_VERSION_ATLEAST(1, 2, 10)
+#ifdef WIN32
+	const SDL_VideoInfo* vidinfo = SDL_GetVideoInfo();
+	if (vidinfo) {
+		int sdl_w = vidinfo->current_w;
+		int sdl_h = vidinfo->current_h;
+		int win_w = GetSystemMetrics(SM_CXSCREEN);
+		int win_h = GetSystemMetrics(SM_CYSCREEN);
+		if (sdl_w != win_w && sdl_h != win_h) 
+			LOG_MSG("Windows dpi/blurry apps scaling detected! The screen might be too large or not\n"
+			        "show properly, please see the DOSBox options file (fullresolution) for details.\n");
+		}
+#else
 	if (!sdl.desktop.full.width || !sdl.desktop.full.height){
 		//Can only be done on the very first call! Not restartable.
+		//On windows don't use it as SDL returns the values without taking in account the dpi scaling
 		const SDL_VideoInfo* vidinfo = SDL_GetVideoInfo();
 		if (vidinfo) {
 			sdl.desktop.full.width = vidinfo->current_w;
 			sdl.desktop.full.height = vidinfo->current_h;
 		}
 	}
+#endif
 #endif
 
 	if (!sdl.desktop.full.width) {
@@ -1687,12 +1711,14 @@ void Config_Add_SDL() {
 
 	Pstring = sdl_sec->Add_string("fullresolution",Property::Changeable::Always,"original");
 	Pstring->Set_help("What resolution to use for fullscreen: original, desktop or a fixed size (e.g. 1024x768).\n"
-	                  "  Using your monitor's native resolution with aspect=true might give the best results.\n"
-			  "  If you end up with small window on a large screen, try an output different from surface.");
+	                  "Using your monitor's native resolution with aspect=true might give the best results.\n"
+			  "If you end up with small window on a large screen, try an output different from surface."
+	                  "On Windows 10 with display scaling (Scale and layout) set to a value above 100%, it is recommended\n"
+	                  "to use a lower full/windowresolution, in order to avoid window size problems.");
 
 	Pstring = sdl_sec->Add_string("windowresolution",Property::Changeable::Always,"original");
 	Pstring->Set_help("Scale the window to this size IF the output device supports hardware scaling.\n"
-	                  "  (output=surface does not!)");
+	                  "(output=surface does not!)");
 
 	const char* outputs[] = {
 		"surface", "overlay",
@@ -1720,7 +1746,7 @@ void Config_Add_SDL() {
 	Pmulti = sdl_sec->Add_multi("priority", Property::Changeable::Always, ",");
 	Pmulti->SetValue("higher,normal");
 	Pmulti->Set_help("Priority levels for dosbox. Second entry behind the comma is for when dosbox is not focused/minimized.\n"
-	                 "  pause is only valid for the second entry.");
+	                 "pause is only valid for the second entry.");
 
 	const char* actt[] = { "lowest", "lower", "normal", "higher", "highest", "pause", 0};
 	Pstring = Pmulti->GetSection()->Add_string("active",Property::Changeable::Always,"higher");
@@ -1959,7 +1985,7 @@ int main(int argc, char* argv[]) {
 #endif  //defined(WIN32) && !(C_DEBUG)
 		if (control->cmdline->FindExist("-version") ||
 		    control->cmdline->FindExist("--version") ) {
-			printf("\nDOSBox version %s, copyright 2002-2017 DOSBox Team.\n\n",VERSION);
+			printf("\nDOSBox version %s, copyright 2002-2018 DOSBox Team.\n\n",VERSION);
 			printf("DOSBox is written by the DOSBox Team (See AUTHORS file))\n");
 			printf("DOSBox comes with ABSOLUTELY NO WARRANTY.  This is free software,\n");
 			printf("and you are welcome to redistribute it under certain conditions;\n");
@@ -1987,7 +2013,7 @@ int main(int argc, char* argv[]) {
 
 	/* Display Welcometext in the console */
 	LOG_MSG("DOSBox version %s",VERSION);
-	LOG_MSG("Copyright 2002-2017 DOSBox Team, published under GNU GPL.");
+	LOG_MSG("Copyright 2002-2018 DOSBox Team, published under GNU GPL.");
 	LOG_MSG("---");
 
 	/* Init SDL */
@@ -2072,9 +2098,11 @@ int main(int argc, char* argv[]) {
 
 	//Second parse -conf switches
 	while(control->cmdline->FindString("-conf",config_file,true)) {
-		if(!control->ParseConfigFile(config_file.c_str())) {
+		if (!control->ParseConfigFile(config_file.c_str())) {
 			// try to load it from the user directory
-			control->ParseConfigFile((config_path + config_file).c_str());
+			if (!control->ParseConfigFile((config_path + config_file).c_str())) {
+				LOG_MSG("CONFIG: Can't open specified config file: %s",config_file.c_str());
+			}
 		}
 	}
 	// if none found => parse localdir conf

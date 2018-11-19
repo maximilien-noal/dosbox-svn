@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2017  The DOSBox Team
+ *  Copyright (C) 2002-2018  The DOSBox Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -603,7 +603,7 @@ static void cache_init(bool enable) {
 
 #if (C_HAVE_MPROTECT)
 			if(mprotect(cache_code_link_blocks,CACHE_TOTAL+CACHE_MAXSIZE+PAGESIZE_TEMP,PROT_WRITE|PROT_READ|PROT_EXEC))
-				LOG_MSG("Setting excute permission on the code cache has failed");
+				LOG_MSG("Setting execute permission on the code cache has failed");
 #endif
 			CacheBlockDynRec * block=cache_getblock();
 			cache.block.first=block;

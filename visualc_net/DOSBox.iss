@@ -7,7 +7,7 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{FBA7CAFC-8256-457B-910A-32E070BA7CFB}
 AppName=DOSBox SVN
-AppVersion=r4093
+AppVersion=r4173
 AppPublisher=The Uploader
 AppPublisherURL=https://github.com/maximilien-noal/dosbox-svn
 AppUpdatesURL=https://github.com/maximilien-noal/dosbox-svn/releases
@@ -15,7 +15,7 @@ DefaultDirName={pf32}\DOSBox-SVN
 DefaultGroupName=\DOSBox SVN
 InfoBeforeFile=..\COPYING
 OutputDir=.\
-OutputBaseFilename=setup-DOSBox_SVN_r4093
+OutputBaseFilename=setup-DOSBox_SVN_r4173
 SetupIconFile=..\src\dosbox.ico
 DisableWelcomePage=no
 SolidCompression=True
@@ -26,7 +26,7 @@ Name: quicklaunchicon; Description: {cm:CreateQuickLaunchIcon}; GroupDescription
 
 [Files]
 Source: "Release\DOSBox.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\deps\libpng\projects\vstudio\Release\libpng16.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "libpng16.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "SDL.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "SDL_net.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "VC_redist.x86.exe"; DestDir: "{tmp}"; Flags: ignoreversion

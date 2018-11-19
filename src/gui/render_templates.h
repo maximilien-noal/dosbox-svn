@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2017  The DOSBox Team
+ *  Copyright (C) 2002-2018  The DOSBox Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -382,9 +382,9 @@ static void conc3d(Cache,SBPP,DBPP) (const void * s) {
 	line0[0]=P;				\
 	line0[1]=P;				\
 	line0[2]=P;				\
-	line1[0]=0;				\
-	line1[1]=0;				\
-	line1[2]=0;				\
+	line1[0]=P;				\
+	line1[1]=P;				\
+	line1[2]=P;				\
 	line2[0]=0;				\
 	line2[1]=0;				\
 	line2[2]=0;

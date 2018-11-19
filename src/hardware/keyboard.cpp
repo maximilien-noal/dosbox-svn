@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2017  The DOSBox Team
+ *  Copyright (C) 2002-2018  The DOSBox Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -115,7 +115,7 @@ static void write_p60(Bitu port,Bitu val,Bitu iolen) {
 			KEYBOARD_AddBuffer(0xfa);	/* Acknowledge */
 			break;
 		case 0xee:	/* Echo */
-			KEYBOARD_AddBuffer(0xfa);	/* Acknowledge */
+			KEYBOARD_AddBuffer(0xee);	/* Echo */
 			break;
 		case 0xf2:	/* Identify keyboard */
 			/* AT's just send acknowledge */
