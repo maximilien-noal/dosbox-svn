@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2017  The DOSBox Team
+ *  Copyright (C) 2002-2018  The DOSBox Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -624,6 +624,11 @@ void INT10_WriteChar(Bit8u chr,Bit8u attr,Bit8u page,Bit16u count,bool showattr)
 			cur_col=0;
 			cur_row++;
 		}
+	}
+
+	if (CurMode->type==M_EGA) {
+		// Reset write ops for EGA graphics modes
+		IO_Write(0x3ce,0x3);IO_Write(0x3cf,0x0);
 	}
 }
 

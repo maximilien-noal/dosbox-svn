@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2002-2017  The DOSBox Team
+ *  Copyright (C) 2002-2018  The DOSBox Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -608,13 +608,6 @@ Hex Section_prop::Get_hex(string const& _propname) const {
 	return 0;
 }
 
-void trim(string& in) {
-	string::size_type loc = in.find_first_not_of(" \r\t\f\n");
-	if (loc != string::npos) in.erase(0,loc);
-	loc = in.find_last_not_of(" \r\t\f\n");
-	if (loc != string::npos) in.erase(loc+1);
-}
-
 bool Section_prop::HandleInputline(string const& gegevens){
 	string str1 = gegevens;
 	string::size_type loc = str1.find('=');
@@ -641,8 +634,15 @@ bool Section_prop::HandleInputline(string const& gegevens){
 
 void Section_prop::PrintData(FILE* outfile) const {
 	/* Now print out the individual section entries */
-	for(const_it tel=properties.begin();tel!=properties.end();tel++){
-		fprintf(outfile,"%s=%s\n",(*tel)->propname.c_str(),(*tel)->GetValue().ToString().c_str());
+	size_t len = 0;
+	// Determine maximum length of the props in this section
+	for(const_it tel = properties.begin();tel != properties.end();tel++) {
+		if ((*tel)->propname.length() > len)
+			len = (*tel)->propname.length();
+	}
+
+	for(const_it tel = properties.begin();tel != properties.end();tel++) {
+		fprintf(outfile,"%-*s = %s\n", len, (*tel)->propname.c_str(), (*tel)->GetValue().ToString().c_str());
 	}
 }
 
@@ -656,8 +656,8 @@ string Section_prop::GetPropValue(string const& _property) const {
 }
 
 bool Section_line::HandleInputline(string const& line) {
-	data+=line;
-	data+="\n";
+	if (!data.empty()) data += "\n"; //Add return to previous line in buffer
+	data += line;
 	return true;
 }
 
@@ -693,7 +693,7 @@ bool Config::PrintConfig(char const * const configfilename) const {
 			}
 			i=0;
 			char prefix[80];
-			snprintf(prefix,80, "\n# %*s  ", (int)maxwidth, "");
+			snprintf(prefix,80, "\n# %*s    ", (int)maxwidth, "");
 			while ((p = sec->Get_prop(i++))) {
 				std::string help = p->Get_help();
 				std::string::size_type pos = std::string::npos;
@@ -836,7 +836,7 @@ bool Config::ParseConfigFile(char const * const configfilename) {
 	settings_type = (configfiles.size() == 0)? "primary":"additional";
 	configfiles.push_back(configfilename);
 
-	LOG_MSG("CONFIG:Loading %s settings from config file %s", settings_type,configfilename);
+	LOG_MSG("CONFIG: Loading %s settings from config file %s", settings_type,configfilename);
 
 	//Get directory from configfilename, used with relative paths.
 	current_config_dir=configfilename;
