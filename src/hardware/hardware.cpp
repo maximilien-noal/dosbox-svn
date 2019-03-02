@@ -30,25 +30,9 @@
 #include "render.h"
 #include "cross.h"
 
-#undef Z_SOLO
-
-
 #if (C_SSHOT)
-
-#define C_THREADED_CAPTURE 1
-
 #include <png.h>
 #include "../libs/zmbv/zmbv.cpp"
-
-#if (C_THREADED_CAPTURE)
-#define MAX_QUEUE_SIZE 400
-
-#include "SDL.h"
-#include <queue>
-
-SDL_Thread *video_thread;
-#endif
-
 #endif
 
 static std::string capturedir;
@@ -59,60 +43,40 @@ Bitu CaptureState;
 #define MIDI_BUF 4*1024
 #define AVI_HEADER_SIZE	500
 
-#if (C_SSHOT)
-typedef struct {
-	Bit16s		*audiobuf;
-	Bitu		audioused;
-	Bit8u		*videobuf;
-	Bit8u		*pal;
-} video_chunk_t;
-
-typedef struct {
-	FILE		*handle;
-	Bitu		frames;
-	Bit16s		audiobuf[WAVE_BUF][2];
-	Bitu		audioused;
-	Bitu		audiorate;
-	Bitu		audiowritten;
-	VideoCodec	*codec;
-	Bitu		width, height, bpp;
-	Bitu		written;
-	float		fps;
-	int			bufSize;
-	void		*buf;
-	Bit8u		*index;
-	Bitu		indexsize, indexused;
-	Bitu		flags;
-	Bitu		pitch;
-	zmbv_format_t   format;
-	bool		thread_running;
-
-#if (C_THREADED_CAPTURE)
-	std::queue<video_chunk_t> q;
-#endif
-
-} video_capture_t;
-#endif
-
 static struct {
 	struct {
-		FILE *  handle;
-		Bit16s  buf[WAVE_BUF][2];
-		Bitu    used;
-		Bit32u  length;
-		Bit32u  freq;
+		FILE * handle;
+		Bit16s buf[WAVE_BUF][2];
+		Bitu used;
+		Bit32u length;
+		Bit32u freq;
 	} wave;
 	struct {
-		FILE *  handle;
-		Bit8u   buffer[MIDI_BUF];
-		Bitu    used, done;
-		Bit32u  last;
+		FILE * handle;
+		Bit8u buffer[MIDI_BUF];
+		Bitu used, done;
+		Bit32u last;
 	} midi;
 	struct {
-		Bitu    rowlen;
+		Bitu rowlen;
 	} image;
 #if (C_SSHOT)
-	video_capture_t video;
+	struct {
+		FILE		*handle;
+		Bitu		frames;
+		Bit16s		audiobuf[WAVE_BUF][2];
+		Bitu		audioused;
+		Bitu		audiorate;
+		Bitu		audiowritten;
+		VideoCodec	*codec;
+		Bitu		width, height, bpp;
+		Bitu		written;
+		float		fps;
+		int			bufSize;
+		void		*buf;
+		Bit8u		*index;
+		Bitu		indexsize, indexused;
+	} video;
 #endif
 } capture;
 
@@ -194,279 +158,147 @@ static void CAPTURE_AddAviChunk(const char * tag, Bit32u size, void * data, Bit3
 	host_writed(index + 8, pos);
 	host_writed(index + 12, size);
 }
+#endif
 
-static void CAPTURE_VideoHeader() {
-	Bit8u avi_header[AVI_HEADER_SIZE];
-	Bitu main_list;
-	Bitu header_pos = 0;
-	Bitu save_pos = ftell(capture.video.handle);
-#define AVIOUT4(_S_) memcpy(&avi_header[header_pos],_S_,4);header_pos+=4;
-#define AVIOUTw(_S_) host_writew(&avi_header[header_pos], _S_);header_pos+=2;
-#define AVIOUTd(_S_) host_writed(&avi_header[header_pos], _S_);header_pos+=4;
-	/* Try and write an avi header */
-	AVIOUT4("RIFF");                    // Riff header
-	AVIOUTd(AVI_HEADER_SIZE + capture.video.written - 8 + capture.video.indexused);
-	AVIOUT4("AVI ");
-	AVIOUT4("LIST");                    // List header
-	main_list = header_pos;
-	AVIOUTd(0);				            // TODO size of list
-	AVIOUT4("hdrl");
-
-	AVIOUT4("avih");
-	AVIOUTd(56);                         /* # of bytes to follow */
-	AVIOUTd((Bit32u)(1000000 / capture.video.fps));       /* Microseconds per frame */
-	AVIOUTd(0);
-	AVIOUTd(0);                         /* PaddingGranularity (whatever that might be) */
-	AVIOUTd(0x110);                     /* Flags,0x10 has index, 0x100 interleaved */
-	AVIOUTd(capture.video.frames);      /* TotalFrames */
-	AVIOUTd(0);                         /* InitialFrames */
-	AVIOUTd(2);                         /* Stream count */
-	AVIOUTd(0);                         /* SuggestedBufferSize */
-	AVIOUTd(capture.video.width);       /* Width */
-	AVIOUTd(capture.video.height);      /* Height */
-	AVIOUTd(0);                         /* TimeScale:  Unit used to measure time */
-	AVIOUTd(0);                         /* DataRate:   Data rate of playback     */
-	AVIOUTd(0);                         /* StartTime:  Starting time of AVI data */
-	AVIOUTd(0);                         /* DataLength: Size of AVI data chunk    */
-
-	/* Video stream list */
-	AVIOUT4("LIST");
-	AVIOUTd(4 + 8 + 56 + 8 + 40);       /* Size of the list */
-	AVIOUT4("strl");
-	/* video stream header */
-	AVIOUT4("strh");
-	AVIOUTd(56);                        /* # of bytes to follow */
-	AVIOUT4("vids");                    /* Type */
-	AVIOUT4(CODEC_4CC);		            /* Handler */
-	AVIOUTd(0);                         /* Flags */
-	AVIOUTd(0);                         /* Reserved, MS says: wPriority, wLanguage */
-	AVIOUTd(0);                         /* InitialFrames */
-	AVIOUTd(1000000);                   /* Scale */
-	AVIOUTd((Bit32u)(1000000 * capture.video.fps));              /* Rate: Rate/Scale == samples/second */
-	AVIOUTd(0);                         /* Start */
-	AVIOUTd(capture.video.frames);      /* Length */
-	AVIOUTd(0);                  /* SuggestedBufferSize */
-	AVIOUTd(~0);                 /* Quality */
-	AVIOUTd(0);                  /* SampleSize */
-	AVIOUTd(0);                  /* Frame */
-	AVIOUTd(0);                  /* Frame */
-	/* The video stream format */
-	AVIOUT4("strf");
-	AVIOUTd(40);                 /* # of bytes to follow */
-	AVIOUTd(40);                 /* Size */
-	AVIOUTd(capture.video.width);         /* Width */
-	AVIOUTd(capture.video.height);        /* Height */
-//		OUTSHRT(1); OUTSHRT(24);     /* Planes, Count */
-	AVIOUTd(0);
-	AVIOUT4(CODEC_4CC);          /* Compression */
-	AVIOUTd(capture.video.width * capture.video.height * 4);  /* SizeImage (in bytes?) */
-	AVIOUTd(0);                  /* XPelsPerMeter */
-	AVIOUTd(0);                  /* YPelsPerMeter */
-	AVIOUTd(0);                  /* ClrUsed: Number of colors used */
-	AVIOUTd(0);                  /* ClrImportant: Number of colors important */
-
-	/* Audio stream list */
-	AVIOUT4("LIST");
-	AVIOUTd(4 + 8 + 56 + 8 + 16);  /* Length of list in bytes */
-	AVIOUT4("strl");
-	/* The audio stream header */
-	AVIOUT4("strh");
-	AVIOUTd(56);            /* # of bytes to follow */
-	AVIOUT4("auds");
-	AVIOUTd(0);             /* Format (Optionally) */
-	AVIOUTd(0);             /* Flags */
-	AVIOUTd(0);             /* Reserved, MS says: wPriority, wLanguage */
-	AVIOUTd(0);             /* InitialFrames */
-	AVIOUTd(4);    /* Scale */
-	AVIOUTd(capture.video.audiorate * 4);             /* Rate, actual rate is scale/rate */
-	AVIOUTd(0);             /* Start */
-	if (!capture.video.audiorate)
-		capture.video.audiorate = 1;
-	AVIOUTd(capture.video.audiowritten / 4);   /* Length */
-	AVIOUTd(0);             /* SuggestedBufferSize */
-	AVIOUTd(~0);            /* Quality */
-	AVIOUTd(4);				/* SampleSize */
-	AVIOUTd(0);             /* Frame */
-	AVIOUTd(0);             /* Frame */
-	/* The audio stream format */
-	AVIOUT4("strf");
-	AVIOUTd(16);            /* # of bytes to follow */
-	AVIOUTw(1);             /* Format, WAVE_ZMBV_FORMAT_PCM */
-	AVIOUTw(2);             /* Number of channels */
-	AVIOUTd(capture.video.audiorate);          /* SamplesPerSec */
-	AVIOUTd(capture.video.audiorate * 4);        /* AvgBytesPerSec*/
-	AVIOUTw(4);             /* BlockAlign */
-	AVIOUTw(16);            /* BitsPerSample */
-	int nmain = header_pos - main_list - 4;
-	/* Finish stream list, i.e. put number of bytes in the list to proper pos */
-
-	int njunk = AVI_HEADER_SIZE - 8 - 12 - header_pos;
-	AVIOUT4("JUNK");
-	AVIOUTd(njunk);
-	/* Fix the size of the main list */
-	header_pos = main_list;
-	AVIOUTd(nmain);
-	header_pos = AVI_HEADER_SIZE - 12;
-	AVIOUT4("LIST");
-	AVIOUTd(capture.video.written + 4); /* Length of list in bytes */
-	AVIOUT4("movi");
-	/* First add the index table to the end */
-	memcpy(capture.video.index, "idx1", 4);
-	host_writed(capture.video.index + 4, capture.video.indexused - 8);
-	fwrite(capture.video.index, 1, capture.video.indexused, capture.video.handle);
-	fseek(capture.video.handle, 0, SEEK_SET);
-	fwrite(&avi_header, 1, AVI_HEADER_SIZE, capture.video.handle);
-	fseek(capture.video.handle, save_pos, SEEK_SET);
-}
-
-
+#if (C_SSHOT)
 static void CAPTURE_VideoEvent(bool pressed) {
 	if (!pressed)
 		return;
 	if (CaptureState & CAPTURE_VIDEO) {
-
 		/* Close the video */
 		CaptureState &= ~CAPTURE_VIDEO;
+		LOG_MSG("Stopped capturing video.");
 
-#if (C_THREADED_CAPTURE)
-		/* Waits for thread to finish */
-		if (capture.video.thread_running) {
-			LOG_MSG("Finalizing video. Please wait...");
-			SDL_WaitThread(video_thread, NULL);
-		}
-#endif
-		/* Adds AVI header to the file */
-		CAPTURE_VideoHeader();
+		Bit8u avi_header[AVI_HEADER_SIZE];
+		Bitu main_list;
+		Bitu header_pos = 0;
+#define AVIOUT4(_S_) memcpy(&avi_header[header_pos],_S_,4);header_pos+=4;
+#define AVIOUTw(_S_) host_writew(&avi_header[header_pos], _S_);header_pos+=2;
+#define AVIOUTd(_S_) host_writed(&avi_header[header_pos], _S_);header_pos+=4;
+		/* Try and write an avi header */
+		AVIOUT4("RIFF");                    // Riff header 
+		AVIOUTd(AVI_HEADER_SIZE + capture.video.written - 8 + capture.video.indexused);
+		AVIOUT4("AVI ");
+		AVIOUT4("LIST");                    // List header
+		main_list = header_pos;
+		AVIOUTd(0);				            // TODO size of list
+		AVIOUT4("hdrl");
 
-		/* Close video file and free memory */
+		AVIOUT4("avih");
+		AVIOUTd(56);                         /* # of bytes to follow */
+		AVIOUTd((Bit32u)(1000000 / capture.video.fps));       /* Microseconds per frame */
+		AVIOUTd(0);
+		AVIOUTd(0);                         /* PaddingGranularity (whatever that might be) */
+		AVIOUTd(0x110);                     /* Flags,0x10 has index, 0x100 interleaved */
+		AVIOUTd(capture.video.frames);      /* TotalFrames */
+		AVIOUTd(0);                         /* InitialFrames */
+		AVIOUTd(2);                         /* Stream count */
+		AVIOUTd(0);                         /* SuggestedBufferSize */
+		AVIOUTd(capture.video.width);       /* Width */
+		AVIOUTd(capture.video.height);      /* Height */
+		AVIOUTd(0);                         /* TimeScale:  Unit used to measure time */
+		AVIOUTd(0);                         /* DataRate:   Data rate of playback     */
+		AVIOUTd(0);                         /* StartTime:  Starting time of AVI data */
+		AVIOUTd(0);                         /* DataLength: Size of AVI data chunk    */
+
+		/* Video stream list */
+		AVIOUT4("LIST");
+		AVIOUTd(4 + 8 + 56 + 8 + 40);       /* Size of the list */
+		AVIOUT4("strl");
+		/* video stream header */
+		AVIOUT4("strh");
+		AVIOUTd(56);                        /* # of bytes to follow */
+		AVIOUT4("vids");                    /* Type */
+		AVIOUT4(CODEC_4CC);		            /* Handler */
+		AVIOUTd(0);                         /* Flags */
+		AVIOUTd(0);                         /* Reserved, MS says: wPriority, wLanguage */
+		AVIOUTd(0);                         /* InitialFrames */
+		AVIOUTd(1000000);                   /* Scale */
+		AVIOUTd((Bit32u)(1000000 * capture.video.fps));              /* Rate: Rate/Scale == samples/second */
+		AVIOUTd(0);                         /* Start */
+		AVIOUTd(capture.video.frames);      /* Length */
+		AVIOUTd(0);                  /* SuggestedBufferSize */
+		AVIOUTd(~0);                 /* Quality */
+		AVIOUTd(0);                  /* SampleSize */
+		AVIOUTd(0);                  /* Frame */
+		AVIOUTd(0);                  /* Frame */
+		/* The video stream format */
+		AVIOUT4("strf");
+		AVIOUTd(40);                 /* # of bytes to follow */
+		AVIOUTd(40);                 /* Size */
+		AVIOUTd(capture.video.width);         /* Width */
+		AVIOUTd(capture.video.height);        /* Height */
+//		OUTSHRT(1); OUTSHRT(24);     /* Planes, Count */
+		AVIOUTd(0);
+		AVIOUT4(CODEC_4CC);          /* Compression */
+		AVIOUTd(capture.video.width * capture.video.height * 4);  /* SizeImage (in bytes?) */
+		AVIOUTd(0);                  /* XPelsPerMeter */
+		AVIOUTd(0);                  /* YPelsPerMeter */
+		AVIOUTd(0);                  /* ClrUsed: Number of colors used */
+		AVIOUTd(0);                  /* ClrImportant: Number of colors important */
+
+		/* Audio stream list */
+		AVIOUT4("LIST");
+		AVIOUTd(4 + 8 + 56 + 8 + 16);  /* Length of list in bytes */
+		AVIOUT4("strl");
+		/* The audio stream header */
+		AVIOUT4("strh");
+		AVIOUTd(56);            /* # of bytes to follow */
+		AVIOUT4("auds");
+		AVIOUTd(0);             /* Format (Optionally) */
+		AVIOUTd(0);             /* Flags */
+		AVIOUTd(0);             /* Reserved, MS says: wPriority, wLanguage */
+		AVIOUTd(0);             /* InitialFrames */
+		AVIOUTd(4);    /* Scale */
+		AVIOUTd(capture.video.audiorate * 4);             /* Rate, actual rate is scale/rate */
+		AVIOUTd(0);             /* Start */
+		if (!capture.video.audiorate)
+			capture.video.audiorate = 1;
+		AVIOUTd(capture.video.audiowritten / 4);   /* Length */
+		AVIOUTd(0);             /* SuggestedBufferSize */
+		AVIOUTd(~0);            /* Quality */
+		AVIOUTd(4);				/* SampleSize */
+		AVIOUTd(0);             /* Frame */
+		AVIOUTd(0);             /* Frame */
+		/* The audio stream format */
+		AVIOUT4("strf");
+		AVIOUTd(16);            /* # of bytes to follow */
+		AVIOUTw(1);             /* Format, WAVE_ZMBV_FORMAT_PCM */
+		AVIOUTw(2);             /* Number of channels */
+		AVIOUTd(capture.video.audiorate);          /* SamplesPerSec */
+		AVIOUTd(capture.video.audiorate * 4);        /* AvgBytesPerSec*/
+		AVIOUTw(4);             /* BlockAlign */
+		AVIOUTw(16);            /* BitsPerSample */
+		int nmain = header_pos - main_list - 4;
+		/* Finish stream list, i.e. put number of bytes in the list to proper pos */
+
+		int njunk = AVI_HEADER_SIZE - 8 - 12 - header_pos;
+		AVIOUT4("JUNK");
+		AVIOUTd(njunk);
+		/* Fix the size of the main list */
+		header_pos = main_list;
+		AVIOUTd(nmain);
+		header_pos = AVI_HEADER_SIZE - 12;
+		AVIOUT4("LIST");
+		AVIOUTd(capture.video.written + 4); /* Length of list in bytes */
+		AVIOUT4("movi");
+		/* First add the index table to the end */
+		memcpy(capture.video.index, "idx1", 4);
+		host_writed(capture.video.index + 4, capture.video.indexused - 8);
+		fwrite(capture.video.index, 1, capture.video.indexused, capture.video.handle);
+		fseek(capture.video.handle, 0, SEEK_SET);
+		fwrite(&avi_header, 1, AVI_HEADER_SIZE, capture.video.handle);
 		fclose(capture.video.handle);
 		free(capture.video.index);
 		free(capture.video.buf);
 		delete capture.video.codec;
 		capture.video.handle = 0;
-
-		LOG_MSG("Stopped capturing video.");
-
 	}
 	else {
-		if (!capture.video.thread_running)
-			CaptureState |= CAPTURE_VIDEO;
+		CaptureState |= CAPTURE_VIDEO;
 	}
 }
-
-int CAPTURE_VideoCompressFrame(video_capture_t *videohandle, video_chunk_t chunk) {
-	Bit8u doubleRow[SCALER_MAXWIDTH * 4];
-	Bitu countWidth = videohandle->width;
-	int codecFlags;
-
-	if (videohandle->frames % 300 == 0)
-		codecFlags = 1;
-	else codecFlags = 0;
-	if (!videohandle->codec->PrepareCompressFrame(codecFlags, videohandle->format, (char *)chunk.pal, videohandle->buf, videohandle->bufSize))
-	{
-		CAPTURE_VideoEvent(true);
-		return 1;
-	}
-
-	for (Bit32u i = 0; i < videohandle->height; i++) {
-		void * rowPointer;
-		if (videohandle->flags & CAPTURE_FLAG_DBLW) {
-			void *srcLine;
-			Bitu x;
-			Bitu countWidth = videohandle->width >> 1;
-			if (videohandle->flags & CAPTURE_FLAG_DBLH)
-				srcLine = (chunk.videobuf + (i >> 1)*videohandle->pitch);
-			else
-				srcLine = (chunk.videobuf + (i >> 0)*videohandle->pitch);
-			switch (videohandle->bpp) {
-			case 8:
-				for (x = 0; x < countWidth; x++)
-					((Bit8u *)doubleRow)[x * 2 + 0] =
-					((Bit8u *)doubleRow)[x * 2 + 1] = ((Bit8u *)srcLine)[x];
-				break;
-			case 15:
-			case 16:
-				for (x = 0; x < countWidth; x++)
-					((Bit16u *)doubleRow)[x * 2 + 0] =
-					((Bit16u *)doubleRow)[x * 2 + 1] = ((Bit16u *)srcLine)[x];
-				break;
-			case 32:
-				for (x = 0; x < countWidth; x++)
-					((Bit32u *)doubleRow)[x * 2 + 0] =
-					((Bit32u *)doubleRow)[x * 2 + 1] = ((Bit32u *)srcLine)[x];
-				break;
-			}
-			rowPointer = doubleRow;
-		}
-		else {
-			if (videohandle->flags & CAPTURE_FLAG_DBLH)
-				rowPointer = (chunk.videobuf + (i >> 1)*videohandle->pitch);
-			else
-				rowPointer = (chunk.videobuf + (i >> 0)*videohandle->pitch);
-		}
-		videohandle->codec->CompressLines(1, &rowPointer);
-	}
-	int written = videohandle->codec->FinishCompressFrame();
-	if (written < 0) {
-		CAPTURE_VideoEvent(true);
-		return 1;
-	}
-	CAPTURE_AddAviChunk("00dc", written, videohandle->buf, codecFlags & 1 ? 0x10 : 0x0);
-	videohandle->frames++;
-	//	LOG_MSG("Frame %d video %d audio %d",videohandle->frames, written, videohandle->audioused *4 );
-
-	if (chunk.audioused) {
-		CAPTURE_AddAviChunk("01wb", chunk.audioused * 4, chunk.audiobuf, 0);
-		videohandle->audiowritten = chunk.audioused * 4;
-	}
-
-	/* Adds AVI header to the file */
-	CAPTURE_VideoHeader();
-
-	return 0;
-}
-
-#if (C_THREADED_CAPTURE)
-video_capture_t *videohandle = NULL;
-SDL_cond* non_empty_queue = SDL_CreateCond();
-SDL_mutex* dummy_mutex = SDL_CreateMutex();
-
-int CAPTURE_VideoThread(void *videohandleptr) {
-	videohandle = (video_capture_t*)videohandleptr;
-	videohandle->thread_running = true;
-	int rc = 0;
-
-	/* while we have to record */
-	while (CaptureState & CAPTURE_VIDEO) {
-
-		/* Process queue while it is not empty */
-		while (!videohandle->q.empty()) {
-			//LOG_MSG("queue size %d",videohandle->q.size());
-
-			/* Process a block and write it to disk */
-			if (!rc) rc = CAPTURE_VideoCompressFrame(videohandle, videohandle->q.front());
-			else CaptureState &= ~CAPTURE_VIDEO;
-			free(videohandle->q.front().videobuf);
-			free(videohandle->q.front().audiobuf);
-			free(videohandle->q.front().pal);
-
-			/* Delete chunk from queue */
-			videohandle->q.pop();
-		}
-
-		/* Sleep while the queue is empty */
-		SDL_CondWait(non_empty_queue, dummy_mutex);
-	}
-
-	videohandle->thread_running = false;
-	videohandle = NULL;
-	return rc;
-}
-
-#endif // C_THREADED_CAPTURE
-
-#endif // C_SSHOT
-
+#endif
 
 void CAPTURE_AddImage(Bitu width, Bitu height, Bitu bpp, Bitu pitch, Bitu flags, float fps, Bit8u * data, Bit8u * pal) {
 #if (C_SSHOT)
@@ -493,7 +325,7 @@ void CAPTURE_AddImage(Bitu width, Bitu height, Bitu bpp, Bitu pitch, Bitu flags,
 		/* Open the actual file */
 		FILE * fp = OpenCaptureFile("Screenshot", ".png");
 		if (!fp) goto skip_shot;
-		/* First try to alloacte the png structures */
+		/* First try to allocate the png structures */
 		png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 		if (!png_ptr) goto skip_shot;
 		info_ptr = png_create_info_struct(png_ptr);
@@ -652,9 +484,8 @@ skip_shot:
 		}
 		if (!capture.video.handle) {
 			capture.video.handle = OpenCaptureFile("Video", ".avi");
-			if (!capture.video.handle) {
+			if (!capture.video.handle)
 				goto skip_video;
-			}
 			capture.video.codec = new VideoCodec();
 			if (!capture.video.codec)
 				goto skip_video;
@@ -667,10 +498,6 @@ skip_shot:
 			capture.video.index = (Bit8u*)malloc(16 * 4096);
 			if (!capture.video.buf)
 				goto skip_video;
-			capture.video.indexsize = 16 * 4096;
-			if (!capture.video.index) {
-				goto skip_video;
-			}
 			capture.video.indexsize = 16 * 4096;
 			capture.video.indexused = 8;
 
