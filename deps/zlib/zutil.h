@@ -13,6 +13,8 @@
 #ifndef ZUTIL_H
 #define ZUTIL_H
 
+#undef Z_SOLO
+
 #ifdef HAVE_HIDDEN
 #  define ZLIB_INTERNAL __attribute__((visibility ("hidden")))
 #else

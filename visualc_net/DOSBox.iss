@@ -7,7 +7,7 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{FBA7CAFC-8256-457B-910A-32E070BA7CFB}
 AppName=DOSBox SVN
-AppVersion=r4192
+AppVersion=r4194 + ThreadedVideoCapture patch
 AppPublisher=The Uploader
 AppPublisherURL=https://github.com/maximilien-noal/dosbox-svn
 AppUpdatesURL=https://github.com/maximilien-noal/dosbox-svn/releases
@@ -15,7 +15,7 @@ DefaultDirName={pf32}\DOSBox-SVN
 DefaultGroupName=\DOSBox SVN
 InfoBeforeFile=..\COPYING
 OutputDir=.\
-OutputBaseFilename=setup-DOSBox_SVN_r4192
+OutputBaseFilename=setup-DOSBox_SVN_r4194-TVC
 SetupIconFile=..\src\dosbox.ico
 DisableWelcomePage=no
 SolidCompression=True

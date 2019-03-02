@@ -46,15 +46,15 @@
     <OutDir>.\Debug\</OutDir>
     <IntDir>.\Debug\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\libpng;F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\zlib;F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\SDL_net\include;F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\SDL\include;$(IncludePath)</IncludePath>
-    <LibraryPath>F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\zlib\lib;F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\SDL_net\lib\x86;F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\SDL\lib\x86;F:\Documents\Visual Studio 2015\Projects\dosbox-SVN\deps\libpng;$(LibraryPath)</LibraryPath>
+    <IncludePath>F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\zlib;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\libpng;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\SDL_net\include;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\SDL\include;$(IncludePath)</IncludePath>
+    <LibraryPath>F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\libpng\projects\vstudio\Debug;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\SDL_net\lib\x86;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\SDL\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>.\Release\</OutDir>
     <IntDir>.\Release\</IntDir>
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\libpng;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\zlib;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\SDL_net\include;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\SDL\include;$(IncludePath);$(VC_IncludePath);$(WindowsSdk_71A_IncludePath)</IncludePath>
-    <LibraryPath>F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\zlib\lib;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\SDL_net\lib\x86;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\SDL\lib\x86;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\libpng;$(LibraryPath);$(VC_LibraryPath_x86);$(WindowsSdk_71A_LibraryPath_x86)</LibraryPath>
+    <LibraryPath>F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\libpng\projects\vstudio\Release;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\SDL_net\lib\x86;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\SDL\lib\x86;F:\Documents\Visual Studio 2017\Projects\dosbox-SVN\deps\libpng;$(LibraryPath);$(VC_LibraryPath_x86);$(WindowsSdk_71A_LibraryPath_x86)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -78,7 +78,7 @@
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>opengl32.lib;sdl_net.lib;winmm.lib;zlib.lib;libpng.lib;sdlmain.lib;sdl.lib;odbc32.lib;odbccp32.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;sdl_net.lib;winmm.lib;zlib.lib;libpng16.lib;sdlmain.lib;sdl.lib;odbc32.lib;odbccp32.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>.\Debug/dosbox.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -123,7 +123,7 @@
       <CompileAs>Default</CompileAs>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>opengl32.lib;sdl_net.lib;winmm.lib;zlib.lib;libpng.lib;sdlmain.lib;sdl.lib;odbc32.lib;odbccp32.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;sdl_net.lib;winmm.lib;zlib.lib;libpng16.lib;sdlmain.lib;sdl.lib;odbc32.lib;odbccp32.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>.\Release/dosbox.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
